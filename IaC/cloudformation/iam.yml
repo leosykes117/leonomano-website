@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Generación de políticas y entidades para el sitio de leonomano.com
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Nombre del proyecto
+    Default: leonomano-website
+  AppName:
+    Type: String
+    Description: Nombre de la aplicación.
+    Default: identities
+  UserName:
+    Type: String
+    Description: Nombre del usuario aprovisionador
+    Default: infrastructure-mngr
+
+Resources:
+  ProvisioningGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - archicture-provisioning
+      ManagedPolicyArns:
+        - !Ref CICDToolsPolicy
+        - !Ref TfBackendPolicy
+        - !Ref IamPolicy
+
+  CICDToolsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Politica que permite crear los recursos del Pipeline de CI/CD'
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - 'cicd-tools'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCodePipelineActions
+            Effect: Allow
+            Action:
+              - codepipeline:Create*
+              - codepipeline:Delete*
+              - codepipeline:DeregisterWebhookWithThirdParty
+              - codepipeline:*StageTransition
+              - codepipeline:GetPipeline*
+              - codepipeline:List*
+              - codepipeline:PutActionRevision
+              - codepipeline:PutWebhook
+              - codepipeline:RegisterWebhookWithThirdParty
+              - codepipeline:TagResource
+              - codepipeline:UntagResource
+              - codepipeline:Update*
+            Resource:
+              - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName} # pipeline
+              - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}/* # stage and action
+              - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:actiontype:* # actiontype
+              - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:webhook:${ProjectName}* # webook
+          - Sid: AllowCodeBuildlineActions
+            Effect: Allow
+            Action:
+              - codebuild:BatchGetBuild*
+              - codebuild:BatchGetProjects
+              - codebuild:CreateProject
+              - codebuild:DeleteBuildBatch
+              - codebuild:DeleteProject
+              - codebuild:ListCuratedEnvironmentImages
+              - codebuild:ListProjects
+            Resource:
+              - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}
+          - Sid: AllowCodeDeployActions
+            Effect: Allow
+            Action:
+              - codedeploy:BatchGetDeploymentGroups
+              - codedeploy:ListApplications
+              - codedeploy:ListDeploymentGroups
+            Resource:
+              - !Sub arn:aws:codeploy:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}
+
+  TfBackendPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Politica que contiene los permisos de S3 y Dynamo para alojar y bloquear el estado del proyecto de terraform'
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - 'tf-backend'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3ObjectActions
+            Effect: Allow
+            Action:
+              - s3:DeleteObject*
+              - s3:GetObject
+              - s3:PutObject
+            Resource:
+              - !Sub arn:aws:s3:::${ProjectName}*/*
+          - Sid: AllowS3BucketActions
+            Effect: Allow
+            Action:
+              - s3:CreateBucket
+              - s3:ListBucket
+              - s3:DeleteBucket
+              - s3:PutBucketTagging
+            Resource: !Sub arn:aws:s3:::${ProjectName}*
+          - Sid: AllowDynamoDBTableActions
+            Effect: Allow
+            Action:
+              - dynamodb:DeleteItem
+              - dynamodb:DescribeTable
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+            Resource: !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/${ProjectName}*
+
+  IamPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Politica que otorga nivel de acceso de escritura y lectura para Roles y Politicas de IAM'
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - 'iam-role-policies'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowManagRoleAndPolicies
+            Effect: Allow
+            Action:
+              - iam:AttachRolePolicy
+              - iam:CreatePolicy*
+              - iam:CreateRole
+              - iam:CreateServiceLinkedRole
+              - iam:DeletePolicy*
+              - iam:DeleteRole*
+              - iam:DeleteServiceLinkedRole
+              - iam:DetachRolePolicy
+              - iam:GetPolicy*
+              - iam:GetRole*
+              - iam:GetServiceLinkedRoleDeletionStatus
+              - iam:ListAttachedRolePolicies
+              - iam:ListEntitiesForPolicy
+              - iam:ListInstanceProfilesForRole
+              - iam:ListPolicyTags
+              - iam:ListPolicyVersions
+              - iam:ListRole*
+              - iam:PassRole
+              - iam:PutRole*
+              - iam:TagPolicy
+              - iam:TagRole
+              - iam:UntagPolicy
+              - iam:UntagRole
+              - iam:UpdateAssumeRolePolicy
+              - iam:UpdateRole*
+            Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*${ProjectName}*
+              - !Sub arn:aws:iam::${AWS::AccountId}:policy/*${ProjectName}*
+
+  ProvisionerUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref UserName
+
+  AdditionToProvisioningGroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref ProvisioningGroup
+      Users:
+        - !Ref ProvisionerUser
+
+  AccessKeyProvisionerUser:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref ProvisionerUser
+
+Outputs:
+  ProvisionerUserName:
+    Description: Nombre del usuario
+    Value: !Ref ProvisionerUser
+  SecretAccessKeyProvisionerUser:
+    Description: Secret Access Key para el usuario aprovisionardo
+    Value: !GetAtt AccessKeyProvisionerUser.SecretAccessKey
