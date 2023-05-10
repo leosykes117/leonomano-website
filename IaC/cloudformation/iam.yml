@@ -27,7 +27,8 @@ Resources:
           - archicture-provisioning
       ManagedPolicyArns:
         - !Ref CICDToolsPolicy
-        - !Ref TfBackendPolicy
+        - !Ref S3Policy
+        - !Ref DynamoPolicy
         - !Ref IamPolicy
 
   CICDToolsPolicy:
@@ -82,8 +83,55 @@ Resources:
               - codedeploy:ListDeploymentGroups
             Resource:
               - !Sub arn:aws:codeploy:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}
+          - Sid: AllowCodeStarConnections
+            Effect: Allow
+            Action:
+              - codestar-connections:CreateConnection
+              - codestar-connections:DeleteConnection
+              - codestar-connections:GetConnection
+              - codestar-connections:ListConnections
+              - codestar-connections:ListTagsForResource
+              - codestar-connections:PassConnection
+              - codestar-connections:TagResource
+              - codestar-connections:UntagResource
+            Resource:
+              - !Sub arn:aws:codestar-connections:${AWS::Region}:${AWS::AccountId}:connection/*
 
-  TfBackendPolicy:
+  S3Policy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Politica para escritura y lectura del servicio de S3'
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - 's3-management'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3Actions
+            Effect: Allow
+            Action:
+              - s3:CreateBucket
+              - s3:DeleteBucket
+              - s3:DeleteObject*
+              - s3:GetBucketAcl
+              - s3:GetBucketCORS
+              - s3:GetBucketPolicy
+              - s3:GetBucketPublicAccessBlock
+              - s3:GetBucketTagging
+              - s3:GetBucketVersioning
+              - s3:GetBucketWebsite
+              - s3:GetEncryptionConfiguration
+              - s3:GetLifecycleConfiguration
+              - s3:GetMetricsConfiguration
+              - s3:GetObject*
+              - s3:GetReplicationConfiguration
+              - s3:ListBucket*
+            Resource:
+              - !Sub arn:aws:s3:::${ProjectName}*
+
+  DynamoPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       Description: 'Politica que contiene los permisos de S3 y Dynamo para alojar y bloquear el estado del proyecto de terraform'
@@ -91,26 +139,10 @@ Resources:
         - '-'
         - - !Ref ProjectName
           - !Ref AppName
-          - 'tf-backend'
+          - 'dynamo-management'
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Sid: AllowS3ObjectActions
-            Effect: Allow
-            Action:
-              - s3:DeleteObject*
-              - s3:GetObject
-              - s3:PutObject
-            Resource:
-              - !Sub arn:aws:s3:::${ProjectName}*/*
-          - Sid: AllowS3BucketActions
-            Effect: Allow
-            Action:
-              - s3:CreateBucket
-              - s3:ListBucket
-              - s3:DeleteBucket
-              - s3:PutBucketTagging
-            Resource: !Sub arn:aws:s3:::${ProjectName}*
           - Sid: AllowDynamoDBTableActions
             Effect: Allow
             Action:
