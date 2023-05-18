@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="bg-dark vh-100 text-secondary px-4 py-5 text-center">
+  <div class="bg-dark vh-100 px-4 py-5 shadow text-center text-secondary">
     <div class="py-5">
       <h1 class="ff-comfortaa display-1 fw-bold text-white">Leonardo Arellano</h1>
       <div class="col-lg-12 mx-auto">
