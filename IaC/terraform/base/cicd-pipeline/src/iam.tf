@@ -14,7 +14,8 @@ data "aws_iam_policy_document" "trust_policy_codepipeline" {
 }
 
 ################################################################################
-# Politica para manegar las herramientas de CICD (CodePipeline, CodeBuild)
+# Politica para manegar las herramientas de CICD
+# (CodePipeline, CodeBuild, CodeStar Connections)
 ################################################################################
 data "aws_iam_policy_document" "cicd_tools" {
   statement {
@@ -25,9 +26,9 @@ data "aws_iam_policy_document" "cicd_tools" {
       "codebuild:StartBuild",
       "codebuild:StartBuildBatch"
     ]
-    effect    = "Allow"
+    effect = "Allow"
     resources = [
-      "arn:aws:codebuild:${var.aws_region}:${data.aws_caller_identity.current.account_id}:project/${var.project_name}"
+      "arn:aws:codebuild:${var.aws_region}:${data.aws_caller_identity.current.account_id}:project/${var.project_name}*"
     ]
   }
   statement {
@@ -41,9 +42,9 @@ data "aws_iam_policy_document" "cicd_tools" {
     ]
     effect = "Allow"
     resources = [
-      "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:application:${var.project_name}",
-      "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentgroup:${var.project_name}/*",
-      "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:${var.project_name}"
+      "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:application:${var.project_name}*",
+      "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentgroup:${var.project_name}*",
+      "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:${var.project_name}*"
     ]
   }
 
@@ -65,6 +66,114 @@ resource "aws_iam_policy" "cicd_tools_management" {
   policy      = data.aws_iam_policy_document.cicd_tools.json
 }
 
+################################################################################
+# Politica para leer y escribir artefactos en el bucket del CodePipeline
+################################################################################
+data "aws_iam_policy_document" "s3_artifacts_store" {
+  statement {
+    sid    = "AllowUseBucket"
+    effect = "Allow"
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:GetObject",
+      "s3:ListMultipartUploadParts",
+      "s3:PutObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.pipeline_artifact_store.arn}/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "s3_artifacts_store" {
+  name        = local.aws_iam_policy_s3_artifacts_store_name
+  path        = "/"
+  description = "Politica que permite escribir y leer en el bucket S3 de los artefactos de pipeline"
+  policy      = data.aws_iam_policy_document.s3_artifacts_store.json
+}
+
+################################################################################
+# Politica para crear y realizar modificaciones al bucket del sitio web
+################################################################################
+data "aws_iam_policy_document" "s3_website_hosting" {
+  statement {
+    sid    = "AllowCreateModifyWebSiteHosting"
+    effect = "Allow"
+    actions = [
+      "s3:CreateBucket",
+      "s3:GetBucketLocation",
+      "s3:GetObject",
+      "s3:PutObject",
+      # [ DeleteBucketPolicy, GetBucketPolicy, GetBucketPolicyStatus, PutBucketPolicy ]
+      "s3:*BucketPolicy*",
+      # [ DeleteBucketWebsite, GetBucketWebsite, PutBucketWebsite ]
+      "s3:*BucketWebsite",
+      # [ DeleteObject, DeleteObjectTagging, DeleteObjectVersion, DeleteObjectVersionTagging ]
+      "s3:DeleteObject*",
+      # [ GetBucketAcl, PutBucketAcl ]
+      "s3:*BucketAcl",
+      # [ GetBucketCORS, PutBucketCORS ]
+      "s3:*BucketCORS",
+      # [ GetBucketLogging, PutBucketLogging ]
+      "s3:*BucketLogging",
+      # [ GetBucketNotification, PutBucketNotification ]
+      "s3:*BucketNotification",
+      # [ GetBucketOwnershipControls, PutBucketOwnershipControls ]
+      "s3:*BucketOwnershipControls",
+      # [ GetBucketPublicAccessBlock, PutBucketPublicAccessBlock ]
+      "s3:*BucketPublicAccessBlock",
+      # [ GetBucketTagging, PutBucketTagging ]
+      "s3:*BucketTagging",
+      # [ GetBucketVersioning, PutBucketVersioning ]
+      "s3:*BucketVersioning",
+      # [ GetEncryptionConfiguration, PutEncryptionConfiguration ]
+      "s3:*EncryptionConfiguration",
+      # [ GetObjectTagging, PutObjectTagging ]
+      "s3:*ObjectTagging",
+      # [ GetObjectVersionTagging, PutObjectVersionTagging ]
+      "s3:*ObjectVersionTagging",
+      # [ ListBucket, ListBucketMultipartUploads, ListBucketVersions ]
+      "s3:ListBucket*"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.project_name}-${var.env}",
+      "arn:aws:s3:::${var.project_name}-${var.env}/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "s3_website_hosting" {
+  name        = local.aws_iam_policy_s3_website_hosting_name
+  path        = "/"
+  description = "Politica que permite escribir y leer en el bucket S3 de los artefactos de pipeline"
+  policy      = data.aws_iam_policy_document.s3_website_hosting.json
+}
+
+################################################################################
+# Politica para crear y enviar logs a CloudWatchLogs
+################################################################################
+data "aws_iam_policy_document" "cloudwatch_logs" {
+  statement {
+    sid = "AllowSendLogsToCloudWatch"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    effect = "Allow"
+    resources = [
+      "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:*${var.project_name}*",
+      "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:*${var.project_name}*:log-stream:*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "cloudwatch_logs" {
+  name        = local.aws_iam_policy_cloudwatch_logs_name
+  path        = "/"
+  description = "Politica que permite enviar logs de la ejecucion del build a CloudWatch Logs"
+  policy      = data.aws_iam_policy_document.cloudwatch_logs.json
+}
 
 ################################################################################
 # Service Role para la ejecución del pipeline
@@ -79,4 +188,19 @@ resource "aws_iam_role" "codepipeline_service_role" {
 resource "aws_iam_role_policy_attachment" "cicd_tools_management_policy" {
   role       = aws_iam_role.codepipeline_service_role.name
   policy_arn = aws_iam_policy.cicd_tools_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "s3_artifacts_store_policy" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.s3_artifacts_store.arn
+}
+
+resource "aws_iam_role_policy_attachment" "s3_website_hosting_policy" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.s3_website_hosting.arn
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_logs_policy" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.cloudwatch_logs.arn
 }

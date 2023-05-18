@@ -8,14 +8,8 @@ resource "aws_s3_bucket" "pipeline_artifact_store" {
   }
 }
 
-# Enable private bucket
-resource "aws_s3_bucket_acl" "pipeline_artifac_store" {
-  bucket = aws_s3_bucket.pipeline_artifact_store.id
-  acl    = "private"
-}
-
 # Block all public access
-resource "aws_s3_bucket_public_access_block" "this" {
+resource "aws_s3_bucket_public_access_block" "pipeline_artifact_store" {
   bucket = aws_s3_bucket.pipeline_artifact_store.id
 
   block_public_acls       = true
@@ -24,8 +18,27 @@ resource "aws_s3_bucket_public_access_block" "this" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "pipeline_artifact_store" {
+  bucket = aws_s3_bucket.pipeline_artifact_store.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# Enable private bucket
+resource "aws_s3_bucket_acl" "pipeline_artifact_store" {
+  bucket = aws_s3_bucket.pipeline_artifact_store.id
+  acl    = "private"
+
+  depends_on = [
+    aws_s3_bucket_public_access_block.pipeline_artifact_store,
+    aws_s3_bucket_ownership_controls.pipeline_artifact_store
+  ]
+}
+
+
 # Enable versioning of objects in the bucket if enviroment is not development
-resource "aws_s3_bucket_versioning" "lambda_resolvers" {
+resource "aws_s3_bucket_versioning" "pipeline_artifact_store" {
   bucket = aws_s3_bucket.pipeline_artifact_store.id
   versioning_configuration {
     status = "Enabled"
@@ -34,7 +47,7 @@ resource "aws_s3_bucket_versioning" "lambda_resolvers" {
 
 
 # Enable server side encryption on S3 with a KMS key AWS
-resource "aws_s3_bucket_server_side_encryption_configuration" "lambda_resolvers" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "pipeline_artifact_stores" {
   bucket = aws_s3_bucket.pipeline_artifact_store.id
   rule {
     apply_server_side_encryption_by_default {
