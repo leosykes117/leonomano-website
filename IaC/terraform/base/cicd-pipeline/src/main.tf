@@ -14,7 +14,7 @@ locals {
   aws_codestar_connection_github_name         = "${var.project_name}-github"
   aws_codebuild_vue_project_name              = "${var.project_name}-${var.env}-build-vue-project"
   aws_codebuild_project_group_log_name        = "${var.project_name}-${var.env}-build-vue-project"
-  aws_s3_bucket_website_hosting_name          = "${var.project_name}-${var.env}"
+  aws_s3_bucket_website_hosting_name          = "${var.project_name}.${var.env}.com"
 }
 
 resource "aws_codestarconnections_connection" "github_source_code" {

@@ -136,8 +136,8 @@ data "aws_iam_policy_document" "s3_website_hosting" {
       "s3:ListBucket*"
     ]
     resources = [
-      "arn:aws:s3:::${var.project_name}-${var.env}",
-      "arn:aws:s3:::${var.project_name}-${var.env}/*"
+      "arn:aws:s3:::${local.aws_s3_bucket_website_hosting_name}",
+      "arn:aws:s3:::${local.aws_s3_bucket_website_hosting_name}/*"
     ]
   }
 }

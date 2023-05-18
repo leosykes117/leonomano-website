@@ -12,8 +12,14 @@ phases:
       - pnpm install
   build:
     commands:
-      - echo Building...
+      - echo Building on `date`
       - pnpm build
   post_build:
     commands:
-      - echo Build Complete
+      - echo Build Complete `date`
+
+artifacts:
+  files:
+    - '**/*'
+  name: vue_webapp_$(date +%Y%m%d_%H%M%S)
+  base-directory: dist
