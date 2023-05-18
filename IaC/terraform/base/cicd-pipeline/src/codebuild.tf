@@ -41,7 +41,7 @@ resource "aws_codebuild_project" "build_vue_project" {
   description  = "Compila la aplicación de VueJS"
   service_role = aws_iam_role.codebuild_service_role.arn
 
-  build_timeout = 5
+  build_timeout = 7
 
   artifacts {
     type = "CODEPIPELINE"
