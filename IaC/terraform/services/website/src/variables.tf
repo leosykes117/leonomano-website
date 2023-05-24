@@ -29,3 +29,18 @@ variable "delete_bucket_hosting" {
   description = "Indica si debe eliminar al bucket del hosting cuando se aplique un destroy"
   type        = bool
 }
+
+variable "domain_name" {
+  description = "Nombre del dominio para el sitio web"
+  type        = string
+}
+
+variable "godaddy_key" {
+  description = "API Key"
+  type        = string
+}
+
+variable "godaddy_secret" {
+  description = "API Key Secret"
+  type        = string
+}

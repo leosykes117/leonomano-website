@@ -6,5 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.66.1"
     }
+
+    godaddy = {
+      source  = "n3integration/godaddy"
+      version = "~> 1.9.1"
+    }
   }
 }

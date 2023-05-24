@@ -11,3 +11,8 @@ provider "aws" {
     }
   }
 }
+
+provider "godaddy" {
+  key    = var.godaddy_key
+  secret = var.godaddy_secret
+}

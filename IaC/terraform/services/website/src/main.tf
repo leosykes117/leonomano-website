@@ -2,6 +2,9 @@ locals {
   application = "services_website"
 
   aws_s3_bucket_hosting = "${var.project_name}.${var.env}.com"
+  domain_name           = "${var.env}.${var.domain_name}"
+  s3_origin_id          = local.domain_name
+  aws_cloudfront_cache_policy_name = "${var.project_name}-${var.env}-default"
 }
 
 data "aws_caller_identity" "current" {}
