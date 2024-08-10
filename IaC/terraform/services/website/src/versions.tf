@@ -6,5 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.66.1"
     }
+
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "4.39.0"
+    }
   }
 }

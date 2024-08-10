@@ -14,23 +14,10 @@ terraform {
       "-backend-config=${abspath("${get_terragrunt_dir()}/../../src/dev.s3.tfbackend")}",
     ]
   }
-
-  extra_arguments "vars" {
-    commands = [
-      "plan",
-      "apply",
-      "import",
-      "push",
-      "refresh",
-      "destroy"
-    ]
-
-    required_var_files = [
-      "${get_terragrunt_dir()}/../../src/dev.tfvars"
-    ]
-  }
 }
 
 inputs = {
+  domain_name           = "leonomano.com"
+  aws_profile           = "website"
   delete_bucket_hosting = true
 }

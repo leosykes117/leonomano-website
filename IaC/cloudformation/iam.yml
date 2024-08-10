@@ -208,6 +208,85 @@ Resources:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*${ProjectName}*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*${ProjectName}*
 
+  CertManagerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Politica que otorga nivel de acceso de escritura y lectura del los certificados'
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - 'cert-manager-rw'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowManagedCertificates
+            Effect: Allow
+            Action:
+              - acm:AddTagsToCertificate
+              - acm:DeleteCertificate
+              - acm:DescribeCertificate
+              - acm:GetAccountConfiguration
+              - acm:GetCertificate
+              - acm:ListCertificates
+              - acm:ListTagsForCertificate
+              - acm:RemoveTagsFromCertificate
+              - acm:RenewCertificate
+              - acm:RequestCertificate
+              - acm:ResendValidationEmail
+              - acm:UpdateCertificateOptions
+            Resource: '*'
+
+  CloudFrontManagerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Politica que otorga nivel de accesso de escritura y lectura para las distribuciones de Cloud Front'
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref ProjectName
+          - !Ref AppName
+          - 'cloud-front-rw'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowWithResource
+            Effect: Allow
+            Action:
+              - cloudfront:AssociateAlias
+              - cloudfront:CreateDistribution
+              - cloudfront:DeleteDistribution
+              - cloudfront:GetDistribution
+              - cloudfront:GetDistributionConfig
+              - cloudfront:ListConflictingAliases
+              - cloudfront:ListTagsForResource
+              - cloudfront:TagResource
+              - cloudfront:UntagResource
+              - cloudfront:UpdateDistribution
+              # [ CreateOriginAccessControl~,DeleteOriginAccessControl,GetOriginAccessControl,GetOriginAccessControlConfig,ListOriginAccessControls,UpdateOriginAccessControl ]
+              # [ origin-access-control* ]
+              - cloudfront:*OriginAccessControl*
+              # [ CreateOriginRequestPolicy,DeleteOriginRequestPolicy,GetOriginRequestPolicy,GetOriginRequestPolicyConfig,ListDistributionsByOriginRequestPolicyId~,UpdateOriginRequestPolicy ]
+              # [ origin-request-policy* ]
+              - cloudfront:*OriginRequestPolicy*
+              # [ CreateCachePolicy,DeleteCachePolicy,GetCachePolicy,GetCachePolicyConfig,ListDistributionsByCachePolicyId,UpdateCachePolicy]
+              # [ cache-policy* ]
+              - cloudfront:*CachePolicy*
+              # [ CreateCloudFrontOriginAccessIdentity,DeleteCloudFrontOriginAccessIdentity,GetCloudFrontOriginAccessIdentity,GetCloudFrontOriginAccessIdentityConfig, UpdateCloudFrontOriginAccessIdentity]
+              # [ origin-access-identity* ]
+              - cloudfront:*OriginAccessIdentity*
+            Resource:
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-request-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:cache-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-access-identity/*
+          - Sid: AllowWithoutResource
+            Effect: Allow
+            Action:
+              - cloudfront:CreateOriginAccessControl
+              - cloudfront:ListCachePolicies
+            Resource: '*'
+
   ProvisionerUser:
     Type: AWS::IAM::User
     Properties:

@@ -29,3 +29,14 @@ variable "delete_bucket_hosting" {
   description = "Indica si debe eliminar al bucket del hosting cuando se aplique un destroy"
   type        = bool
 }
+
+variable "domain_name" {
+  description = "Nombre del dominio para el sitio web"
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  description = "The API Token for Cloudflare operations"
+  type        = string
+  sensitive   = true
+}
