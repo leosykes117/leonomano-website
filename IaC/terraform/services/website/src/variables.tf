@@ -35,12 +35,8 @@ variable "domain_name" {
   type        = string
 }
 
-variable "godaddy_key" {
-  description = "API Key"
+variable "cloudflare_api_token" {
+  description = "The API Token for Cloudflare operations"
   type        = string
-}
-
-variable "godaddy_secret" {
-  description = "API Key Secret"
-  type        = string
+  sensitive   = true
 }

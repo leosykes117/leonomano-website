@@ -1,6 +1,6 @@
 inputs = {
   project_name = "leonomano-website"
-  env = basename(path_relative_to_include())
+  env          = basename(path_relative_to_include())
 }
 
 remote_state {

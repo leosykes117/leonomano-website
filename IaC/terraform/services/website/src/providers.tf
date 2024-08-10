@@ -12,7 +12,6 @@ provider "aws" {
   }
 }
 
-provider "godaddy" {
-  key    = var.godaddy_key
-  secret = var.godaddy_secret
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }

@@ -7,9 +7,9 @@ terraform {
       version = "~> 4.66.1"
     }
 
-    godaddy = {
-      source  = "n3integration/godaddy"
-      version = "~> 1.9.1"
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "4.39.0"
     }
   }
 }
