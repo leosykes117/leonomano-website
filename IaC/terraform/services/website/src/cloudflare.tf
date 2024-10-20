@@ -16,6 +16,6 @@ resource "cloudflare_record" "cloudfront_distribution" {
   name    = var.env == "prod" ? "" : var.env
   content = aws_cloudfront_distribution.website.domain_name
   type    = "CNAME"
-  ttl     = 1
-  proxied = true
+  ttl     = 300
+  # proxied = true
 }

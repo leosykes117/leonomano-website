@@ -2,8 +2,9 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      nodejs: 18
     commands:
-      - npm i npm@latest -g
       - npm install -g pnpm
   pre_build:
     commands:

@@ -48,9 +48,9 @@ resource "aws_codebuild_project" "build_vue_project" {
   }
 
   environment {
-    type                        = "LINUX_CONTAINER"
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
+    type                        = "LINUX_LAMBDA_CONTAINER"
+    compute_type                = "BUILD_LAMBDA_1GB"
+    image                       = "aws/codebuild/amazonlinux-x86_64-lambda-standard:nodejs18"
     image_pull_credentials_type = "CODEBUILD"
   }
 
